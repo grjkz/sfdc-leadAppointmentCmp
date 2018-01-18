@@ -11,6 +11,16 @@ public class CreateAppointmentController {
 	}
 
 	@AuraEnabled
+	public static String getEvents() {
+		// unfortunately Who.field references return null
+		return JSON.serialize([
+			SELECT OwnerId, Location, Subject, StartDateTime, EndDateTime, ShowAs, Who.Email, Who.Phone 
+			FROM Event 
+			WHERE OwnerId = :UserInfo.getUserId()
+		]);
+	}
+
+	@AuraEnabled
 	public static void createAppointment(Id leadId, String newEventData) {
 		Database.LeadConvertResult lcr = convertLead(leadId);
 
@@ -57,12 +67,12 @@ public class CreateAppointmentController {
 
 	public class TempEvent {
 		public Id OwnerId;
-		public String Phone;
-		public String Email;
+		public String Phone; // not a std field
+		public String Email; // ditto
 		public String Location;
 		public String Subject;
-		public String StartDateTime;
-		public String EndDateTime;
+		public Long StartDateTime;
+		public Long EndDateTime;
 		public String ShowAs;
 
 		public Event generateEvent() {
@@ -70,8 +80,8 @@ public class CreateAppointmentController {
 				OwnerId = this.OwnerId,
 				Location = this.Location,
 				Subject = this.Subject,
-				StartDateTime = DateTime.parse(this.StartDateTime),
-				EndDateTime = DateTime.parse(this.EndDateTime),
+				StartDateTime = DateTime.newInstance(this.StartDateTime),
+				EndDateTime = DateTime.newInstance(this.EndDateTime),
 				ShowAs = this.ShowAs
 			);
 			return newEvent;

@@ -41,4 +41,17 @@ public class CreateAppointmentControllerTest {
 		System.assertEquals(expectedStartDate, createdEvent.StartDateTime, 'Expecting the start datetime on the event to be correct');
 		System.assertEquals(expectedEndDate, createdEvent.EndDateTime, 'Expecting the end datetime on the event to be correct');
 	}
+
+	@isTest
+	private static void getEvents() {
+		setup();
+		CreateAppointmentController.createAppointment(testLead.Id, JSON_STRING);
+		
+		List<Event> returnedEvents;
+		Test.startTest();
+			returnedEvents = (List<Event>)JSON.deserialize(CreateAppointmentController.getEvents(), List<Event>.class);
+		Test.stopTest();
+
+		System.assertEquals(1, returnedEvents.size(), 'Expecting all the Events this user owns, to be returned');
+	}
 }

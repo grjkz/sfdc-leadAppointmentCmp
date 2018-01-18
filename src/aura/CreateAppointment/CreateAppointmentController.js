@@ -12,19 +12,14 @@
 		}
 	},
 
-	doDebug : function(cmp) {
-		debugger;
-	},
-
-	afterScriptsLoaded : function(cmp, event, helper) {
-		console.log('jquery loaded');
-		helper.loadCalendar(cmp);
-	},
-
 	scriptsLoaded: function(cmp,evt,helper){
 	  var events = cmp.get("v.events");
 	  if(!events.length) {
       helper.fetchEvents(cmp);
 	  }
+	  else {
+	  	alert('You have not created a new appointment yet.');
+	  }
   }
+
 })

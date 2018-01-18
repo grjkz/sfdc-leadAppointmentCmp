@@ -13,7 +13,8 @@
 	<aura:attribute name="newEvent" type="Object" />
 	<aura:attribute name="selectedEvent" type="Object" />
 	<aura:attribute name="theLead" type="Lead" />
-	
+	<aura:attribute name="disableModalEditFields" type="Boolean" default="false" />
+
 	<aura:attribute name="showAsOptions" type="Object[]" default="[{value: 'Free'}, {value: 'Busy'}, {value: 'OutOfOffice'}]"/>
 
 	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
@@ -80,43 +81,80 @@
 		</aura:set>
 	</lightning:card>
 
+<!-- NOT HOW I WOULD NORMALLY DO THIS (cloning this modal / anti-DRY) -->
+	<aura:if isTrue="{!v.disableModalEditFields}">
+	  <div class="calendar-modal-edit">
+			<lightning:card title="{!v.selectedEvent.Subject}">
+				<lightning:layout multipleRows="true" class="card-body-padding">
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="true" label="Assigned To:" value="{!v.theLead.Owner.FirstName + ' ' + v.theLead.Owner.LastName}" />
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="true" label="Initial Appointment Date" value="{!v.selectedEvent.StartDateTime_d}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="{!v.disableModalEditFields}" label="Email" value="{!v.selectedEvent.Email}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="true" label="Initial Appointment Time" value="{!v.selectedEvent.StartDateTime_t}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="{!v.disableModalEditFields}" label="Phone" value="{!v.selectedEvent.Phone}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="{!v.disableModalEditFields}" label="Subject" value="{!v.selectedEvent.Subject}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:select disabled="{!v.disableModalEditFields}" label="Show Time As:" value="{!v.selectedEvent.ShowAs}">
+							<aura:iteration var="option" items="{!v.showAsOptions}">
+								<option value="{!option.value}" text="{!option.value}"></option>
+							</aura:iteration>
+						</lightning:select>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="12" padding="horizontal-small">
+						<lightning:input readonly="{!v.disableModalEditFields}" label="Location" value="{!v.selectedEvent.Location}"/>
+					</lightning:layoutItem>
+				</lightning:layout>
+			</lightning:card>
+	  </div>
+	</aura:if>
 
-  <div class="calendar-modal-edit">
-		<lightning:card title="{!v.newEvent.Subject}">
-			<lightning:layout multipleRows="true" class="card-body-padding">
-				<lightning:layoutItem size="12">
-					<lightning:input readonly="true" label="Assigned To:" value="{!v.theLead.Owner.FirstName + ' ' + v.theLead.Owner.LastName}" />
-				</lightning:layoutItem>
-				<lightning:layoutItem size="12">
-					<lightning:input readonly="true" label="Initial Appointment Date" value="{!(v.newEvent.StartDateTime)}"/>
-				</lightning:layoutItem>
-				<lightning:layoutItem size="12">
-					<lightning:input label="Initial Appointment Time" value="{!(v.newEvent.StartDateTime)}"/>
-				</lightning:layoutItem>
-				<lightning:layoutItem size="12">
-					<lightning:input readonly="true" label="Email" value="{!v.newEvent.Email}"/>
-				</lightning:layoutItem>
-				<lightning:layoutItem size="12">
-					<lightning:input readonly="true" label="Phone" value="{!v.newEvent.Phone}"/>
-				</lightning:layoutItem>
-				<lightning:layoutItem size="12">
-					<lightning:input readonly="true" label="Subject" value="{!v.newEvent.Subject}"/>
-				</lightning:layoutItem>
-				<lightning:layoutItem size="12">
-					<lightning:select label="Show Time As:" value="{!v.theLead.ShowAs}">
-						<aura:iteration var="option" items="{!v.showAsOptions}">
-							<option value="{!option.value}" text="{!option.value}"></option>
-						</aura:iteration>
-					</lightning:select>
-				</lightning:layoutItem>
-				<lightning:layoutItem size="12">
-					<lightning:input label="Location" value="{!v.newEvent.Location}"/>
-				</lightning:layoutItem>
-			</lightning:layout>
-		</lightning:card>
-  </div>
-	
-	<lightning:layout >
-		<lightning:button label="Debug" onclick="{!c.doDebug}" />
-	</lightning:layout>
+	<aura:if isTrue="{!!v.disableModalEditFields}">
+	  <div class="calendar-modal-edit">
+			<lightning:card title="{!v.newEvent.Subject}">
+				<lightning:layout multipleRows="true" class="card-body-padding">
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="true" label="Assigned To:" value="{!v.theLead.Owner.FirstName + ' ' + v.theLead.Owner.LastName}" />
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="true" label="Initial Appointment Date" value="{!v.newEvent.StartDateTime_d}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="{!v.disableModalEditFields}" label="Email" value="{!v.newEvent.Email}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="true" label="Initial Appointment Time" value="{!v.newEvent.StartDateTime_t}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="true" label="Phone" value="{!v.newEvent.Phone}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:input readonly="{!v.disableModalEditFields}" label="Subject" value="{!v.newEvent.Subject}"/>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="6" padding="horizontal-small">
+						<lightning:select disabled="{!v.disableModalEditFields}" label="Show Time As:" value="{!v.newEvent.ShowAs}">
+							<aura:iteration var="option" items="{!v.showAsOptions}">
+								<option value="{!option.value}" text="{!option.value}"></option>
+							</aura:iteration>
+						</lightning:select>
+					</lightning:layoutItem>
+					<lightning:layoutItem size="12" padding="horizontal-small">
+						<lightning:input readonly="{!v.disableModalEditFields}" label="Location" value="{!v.newEvent.Location}"/>
+					</lightning:layoutItem>
+				</lightning:layout>
+			</lightning:card>
+	  </div>
+	</aura:if>
+
+
 </aura:component>

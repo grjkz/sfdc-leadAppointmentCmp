@@ -32,10 +32,8 @@
 		const theLead = cmp.get('v.theLead');
 		var action = cmp.get('c.createAppointment');
 
-		// for some reason moment.js millisecond is off by -3 hours local time
-		// so we need to format to apex datetime string before sending to controller
-		newEventData.StartDateTime = newEventData.StartDateTime.format('MM/DD/YYYY HH:mm A');
-		newEventData.EndDateTime = newEventData.EndDateTime.format('MM/DD/YYYY HH:mm A');
+		newEventData.StartDateTime = newEventData.StartDateTime.utc().format('x');
+		newEventData.EndDateTime = newEventData.EndDateTime.utc().format('x');
 
 		action.setParams({
 			leadId: theLead.Id,
@@ -48,7 +46,7 @@
 
 			if (state === 'SUCCESS') {
 				alert('Lead Sucessfully Converted!');
-				$A.get('e.force:refreshView').fire();
+				$A.get("e.force:navigateToObjectHome").setParams({"scope": "Lead"}).fire();
 			}
 			else if (state === 'ERROR') {
 				var errors = response.getError();
@@ -67,24 +65,42 @@
 		$A.enqueueAction(action);
 	},
 
-	createEventObj : function(cmp, eventData) {
+	createNewEventObj : function(cmp, eventData) {
 		const theLead = cmp.get('v.theLead');
-		const newEventRecordData = {
+		let newEventRecordData = {
 			OwnerId: theLead.OwnerId,
 			Phone: theLead.Phone,
 			Email: theLead.Email,
 			Location: theLead.Street + ' ' + theLead.City + ' ' + theLead.State + ' ' + theLead.PostalCode,
 			Subject: eventData.title,
 			StartDateTime: eventData.start,
+			StartDateTime_d: eventData.start.format('ddd MMM DD, YYYY'),
+			StartDateTime_t: eventData.start.format('hh:mm A'),
 			EndDateTime: eventData.end,
 			ShowAs: 'Busy'
 		};
 		return newEventRecordData;
 	},
 
+	// used for display purposes when user clicks on any calendar event
+	createCalendarEventObj : function(eventData) {
+		const newEventRecordData = {
+			OwnerId: eventData.Id,
+			// Phone: eventData.Who.Phone,
+			// Email: eventData.Who.Email,
+			Location: eventData.location,
+			Subject: eventData.title,
+			StartDateTime: eventData.start,
+			StartDateTime_d: eventData.start.format('ddd MMM DD, YYYY'),
+			StartDateTime_t: eventData.start.format('hh:mm A'),
+			EndDateTime: eventData.end,
+			ShowAs: eventData.showAs
+		};
+		return newEventRecordData;
+	},
+
 	loadDataToCalendar : function(cmp, data){
     let cal_elmt = cmp.find('calendar').getElement();
-    this.cmpt = cmp;
 
     $(cal_elmt).fullCalendar({
       events: data,
@@ -127,81 +143,62 @@
         	};
         	$(cal_elmt).fullCalendar('renderEvent', eventData, true);
         	
-        	this.cmpt.set('v.newEvent', this.createEventObj(cmp, eventData));
+        	cmp.set('v.newEvent', this.createNewEventObj(cmp, eventData));
       	}
 
       	$(cal_elmt).fullCalendar('unselect');
       }.bind(this),
-			selectOverlap: function(event) {
-				return event.id === 'NEW_EVENT';
-			},
+			// selectOverlap: function(event) {
+			// 	return (event.id === 'NEW_EVENT') ? 
+			// 		true : 
+			// 		confirm('New appointment overlaps an existing one. Continue to create appointment for this time?');
+			// },
       eventLimit: true,
-      eventClick: $A.getCallback(function(calEvent, jsEvent, view) {
+      eventClick: function(calEvent, jsEvent, view) {
       	if (calEvent.id === 'NEW_EVENT') {
-
-          // let editRecordEvent = $A.get('e.force:editRecord');
-          // editRecordEvent.setParams({
-          //     'recordId': calEvent.id
-          // });
-          // editRecordEvent.fire();
+	    		cmp.set('v.selectedEvent', cmp.get('v.newEvent'));
+	    		cmp.set('v.disableModalEditFields', false);
       	}
-      })
+      	else {
+	    		cmp.set('v.selectedEvent', this.createCalendarEventObj(calEvent));
+	    		cmp.set('v.disableModalEditFields', true);
+      	}
+      }.bind(this)
     });
   },
 
-    tranformToFullCalendarFormat : function(component,events) {
-        var eventArr = [];
-        for(var i = 0;i < events.length;i++){
-            eventArr.push({
-                'id': events[i].Id,
-                'start': moment.tz(events[i].StartDateTime, 'America/Los_Angeles'),
-                'end': moment.tz(events[i].EndDateTime, 'America/Los_Angeles'),
-                'title': events[i].Subject
-            });
-        }
-        return eventArr;
-    },
-    fetchEvents : function(component) {
+  fetchEvents : function(component) {
+	  var action = component.get('c.getEvents'); 
 
-        				const data = [
-    				      {
-						        title: 'Meeting',
-						        start: '2018-01-15T10:30:00',
-						        end: '2018-01-15T12:30:00'
-						      },
-						      {
-						        title: 'Lunch',
-						        start: '2018-01-16T12:00:00'
-						      },
-						      {
-						        title: 'Meeting',
-						        start: '2018-01-17T14:30:00'
-						      },
-						      {
-						        title: 'Happy Hour',
-						        start: '2018-01-18T17:30:00'
-						      },
-						      {
-						        title: 'Dinner',
-						        start: '2018-01-19T20:00:00'
-						      },
-        				];
-                this.loadDataToCalendar(component, data);
-                component.set('v.events', data);
+	  action.setCallback(this, function(response) {
+	      var state = response.getState();
+	      console.log('c.getEvents stats: ', state);
 
+	      if(component.isValid() && state === 'SUCCESS') {
+	          var eventArr = this.tranformToFullCalendarSchema(JSON.parse(response.getReturnValue()));
+	          this.loadDataToCalendar(component, eventArr);
+	      }
+		});
 
-        // var action = component.get('c.getEvents'); 
+	  $A.enqueueAction(action);
+  },
 
-        // action.setCallback(this, function(response) {
-        //     var state = response.getState();
-        //     console.log(state);
-        //     if(component.isValid() && state === 'SUCCESS'){
-        //         var eventArr = this.tranformToFullCalendarFormat(component,response.getReturnValue());
-        //         this.loadDataToCalendar(component,eventArr);
-        //         component.set('v.events',eventArr);
-        //     }
-        // });
+  tranformToFullCalendarSchema : function(events) {
+    var eventArr = [];
 
-        // $A.enqueueAction(action); 
+    for(var i = 0;i < events.length;i++){
+      eventArr.push({
+        id: events[i].Id,
+        title: events[i].Subject,
+        email: events[i].Email,
+        phone: events[i].Phone,
+        start: moment.utc(events[i].StartDateTime).local(),
+        end: moment.utc(events[i].EndDateTime).local(),
+        location: events[i].Location,
+        showAs: events[i].ShowAs
+      });
     }
+    return eventArr;
+  }
+
 })
