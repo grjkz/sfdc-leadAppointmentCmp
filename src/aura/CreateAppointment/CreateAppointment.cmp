@@ -1,0 +1,122 @@
+<aura:component implements="force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId" controller="CreateAppointmentController" >
+
+	<ltng:require styles="{!$Resource.fullCalendar380 + '/fullcalendar.min.css'}" 
+    scripts="{!join(',',
+	    $Resource.fullCalendar380 + '/jquery.min.js',
+	    $Resource.fullCalendar380 + '/fullcalendar.min.js',
+	    $Resource.fullCalendar380 + '/moment.min.js',
+	    $Resource.fullCalendar380 + '/jquery-ui.min.js'
+    )}" 
+	  afterScriptsLoaded="{!c.scriptsLoaded}" />
+
+	<aura:attribute name="events" type="Object[]" />
+	<aura:attribute name="newEvent" type="Object" />
+	<aura:attribute name="selectedEvent" type="Object" />
+	<aura:attribute name="theLead" type="Lead" />
+	
+	<aura:attribute name="showAsOptions" type="Object[]" default="[{value: 'Free'}, {value: 'Busy'}, {value: 'OutOfOffice'}]"/>
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+
+	<lightning:card title="Customer Information:">
+		<lightning:layout multipleRows="true" class="card-body-padding">
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="First Name" value="{!v.theLead.FirstName}" />
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="Last Name" value="{!v.theLead.LastName}"/>
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="Street" value="{!v.theLead.Street}" />
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="City" value="{!v.theLead.City}" />
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="State" value="{!v.theLead.State}" />
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="Zip Code" value="{!v.theLead.PostalCode}" />
+			</lightning:layoutItem>
+		</lightning:layout>
+	</lightning:card>
+	
+
+	<lightning:card title="Lead Owner:">
+		<lightning:layout multipleRows="true" class="card-body-padding">
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="First Name" value="{!v.theLead.Owner.FirstName}" />
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="Last Name" value="{!v.theLead.Owner.LastName}"/>
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="Phone" value="{!v.theLead.Owner.Phone}"/>
+			</lightning:layoutItem>
+			<lightning:layoutItem size="6">
+				<lightning:input readonly="true" label="Email Address" value="{!v.theLead.Owner.Email}"/>
+			</lightning:layoutItem>
+		</lightning:layout>
+	</lightning:card>
+
+
+	<lightning:card >
+		<aura:set attribute="title">
+			<div>Estimator Calendar</div>
+		</aura:set>
+		
+		<aura:set attribute="body">
+	    <div class="slds-grid calendar-container">
+        <div class="slds-col">
+          <div aura:id="calendar"></div>
+        </div>
+	    </div>
+
+		</aura:set>
+
+		<aura:set attribute="footer">
+			<lightning:button label="Save Appointment" onclick="{!c.saveAppt}" />
+		</aura:set>
+	</lightning:card>
+
+
+  <div class="calendar-modal-edit">
+		<lightning:card title="{!v.newEvent.Subject}">
+			<lightning:layout multipleRows="true" class="card-body-padding">
+				<lightning:layoutItem size="12">
+					<lightning:input readonly="true" label="Assigned To:" value="{!v.theLead.Owner.FirstName + ' ' + v.theLead.Owner.LastName}" />
+				</lightning:layoutItem>
+				<lightning:layoutItem size="12">
+					<lightning:input readonly="true" label="Initial Appointment Date" value="{!(v.newEvent.StartDateTime)}"/>
+				</lightning:layoutItem>
+				<lightning:layoutItem size="12">
+					<lightning:input label="Initial Appointment Time" value="{!(v.newEvent.StartDateTime)}"/>
+				</lightning:layoutItem>
+				<lightning:layoutItem size="12">
+					<lightning:input readonly="true" label="Email" value="{!v.newEvent.Email}"/>
+				</lightning:layoutItem>
+				<lightning:layoutItem size="12">
+					<lightning:input readonly="true" label="Phone" value="{!v.newEvent.Phone}"/>
+				</lightning:layoutItem>
+				<lightning:layoutItem size="12">
+					<lightning:input readonly="true" label="Subject" value="{!v.newEvent.Subject}"/>
+				</lightning:layoutItem>
+				<lightning:layoutItem size="12">
+					<lightning:select label="Show Time As:" value="{!v.theLead.ShowAs}">
+						<aura:iteration var="option" items="{!v.showAsOptions}">
+							<option value="{!option.value}" text="{!option.value}"></option>
+						</aura:iteration>
+					</lightning:select>
+				</lightning:layoutItem>
+				<lightning:layoutItem size="12">
+					<lightning:input label="Location" value="{!v.newEvent.Location}"/>
+				</lightning:layoutItem>
+			</lightning:layout>
+		</lightning:card>
+  </div>
+	
+	<lightning:layout >
+		<lightning:button label="Debug" onclick="{!c.doDebug}" />
+	</lightning:layout>
+</aura:component>
